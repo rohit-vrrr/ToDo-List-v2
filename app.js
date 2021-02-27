@@ -29,29 +29,37 @@ const item3 = new Item ({ name: "Hit the - button to delete an item." });
 
 const defaultItems = [item1, item2, item3];
 
-// insert default items
-Item.insertMany(defaultItems, function(err) {
-  if(err) { console.log(err); }
-  else { console.log("Successfully inserted default items!"); }
-});
-
 app.get("/", function(req, res) {
 
-  res.render("list", {listTitle: "Today", newListItems: items});
+  Item.find(function(err, foundItems) {
+    if(err) { console.log(err); }
+    else {
+      if(foundItems.length === 0) {
 
+        // insert default items
+        Item.insertMany(defaultItems, function(err) {
+          if(err) { console.log(err); }
+          else { console.log("Successfully inserted default items!"); }
+        });
+
+        res.redirect('/');
+
+      }
+      else {
+        res.render("list", {listTitle: "Today", newListItems: foundItems});
+      }
+    }
+  });
 });
 
 app.post("/", function(req, res){
 
-  const item = req.body.newItem;
+  const itemName = req.body.newItem;
 
-  if (req.body.list === "Work") {
-    workItems.push(item);
-    res.redirect("/work");
-  } else {
-    items.push(item);
-    res.redirect("/");
-  }
+  const item = new Item ({ name: itemName });
+  item.save();
+
+  res.redirect('/');
 });
 
 app.get("/work", function(req,res){
