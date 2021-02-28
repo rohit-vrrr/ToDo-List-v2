@@ -19,8 +19,15 @@ const itemsSchema = new mongoose.Schema ({
   name: String
 });
 
+const listSchema = new mongoose.Schema ({
+  name: String,
+  items: [itemsSchema]
+});
+
 // creating Model
 const Item = mongoose.model("Item", itemsSchema);
+
+const List = mongoose.model("List", listSchema);
 
 // creating Documents
 const item1 = new Item ({ name: "welcome to your todolist!" });
@@ -75,8 +82,25 @@ app.post("/delete", function(req, res) {
   });
 });
 
-app.get("/work", function(req,res){
-  res.render("list", {listTitle: "Work List", newListItems: workItems});
+app.get("/:customListName", function(req, res) {
+  const customListName = req.params.customListName;
+
+  List.findOne({name: customListName}, function(err, foundList) {
+    if(!err) {
+      if(!foundList){
+        // create new list
+        const list = new List ({ name: customListName, items: defaultItems });
+        list.save();
+
+        res.redirect("/" + customListName);
+      }
+      else {
+        // show existing list
+        res.render("list", {listTitle: customListName, newListItems: foundList.items});
+      }
+    }
+  });
+
 });
 
 app.get("/about", function(req, res){
